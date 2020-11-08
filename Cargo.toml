@@ -1,0 +1,18 @@
+[package]
+name = "winit_open"
+version = "0.1.0"
+authors = ["arturkovacs <kovacs.artur.barnabas@gmail.com>"]
+edition = "2018"
+description = "Just a test for opening files on macos"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[package.metadata.bundle]
+identifier = "io.github.arturkovacs.winit_open"
+icon = ["resource_dev/emulsion.png"]
+resources = ["LICENSE.txt"]
+short_description = "A lightweight and minimalistic image viewer"
+copyright = "Copyright (c) 2020 The Emulsion Contributors"
+
+[dependencies]
+winit = { path = "/Users/arturkovacs/software/winit" }
