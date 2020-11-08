@@ -15,4 +15,4 @@ short_description = "A lightweight and minimalistic image viewer"
 copyright = "Copyright (c) 2020 The Emulsion Contributors"
 
 [dependencies]
-winit = { path = "/Users/arturkovacs/software/winit" }
+winit = { git = "https://github.com/ArturKovacs/winit.git", branch = "add-macos-open-files" }

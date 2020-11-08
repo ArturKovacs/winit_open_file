@@ -918,6 +918,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "winit"
 version = "0.23.0"
+source = "git+https://github.com/ArturKovacs/winit.git?branch=add-macos-open-files#11419b19ed1bce308ebda02b2c04a0b95e4f4e46"
 dependencies = [
  "bitflags",
  "cocoa",
