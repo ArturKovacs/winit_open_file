@@ -1,23 +1,19 @@
-
-
+use std::path::Path;
 use std::rc::Rc;
-use std::path::{Path, PathBuf};
 
 use winit::{
     dpi::LogicalSize,
     event::{Event, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    window::{WindowBuilder, Window},
+    window::{Window, WindowBuilder},
 };
-
-#[cfg(target_os = "macos")]
-use winit::platform::macos::EventLoopWindowTargetExtMacOS;
 
 fn open_file(window: &Window, path: &Path) {
     // TODO place your file opening logic here.
     let filename = path.as_os_str();
     let filename = filename.to_owned().into_string().unwrap();
-    window.set_title(filename.as_str());
+    let title = format!("Received file: '{}'", filename);
+    window.set_title(&title);
 }
 
 fn main() {
@@ -32,25 +28,17 @@ fn main() {
         file_path = None;
     }
 
-    let window = Rc::new(WindowBuilder::new()
-        .with_title("Loading")
-        .with_inner_size(LogicalSize::new(400.0, 200.0))
-        .with_resizable(true)
-        .build(&event_loop)
-        .unwrap());
+    let window = Rc::new(
+        WindowBuilder::new()
+            .with_title("Loading")
+            .with_inner_size(LogicalSize::new(400.0, 200.0))
+            .with_resizable(true)
+            .build(&event_loop)
+            .unwrap(),
+    );
 
     if let Some(file_path) = file_path {
         open_file(&window, file_path.as_ref());
-    }
-
-    #[cfg(target_os = "macos")]
-    {
-        let window = window.clone();
-        event_loop.set_open_files_callback(Some(move |files: &[PathBuf]| {
-            if let Some(filename) = files.iter().next() {
-                open_file(&window, filename.as_ref());
-            }
-        }));
     }
 
     event_loop.run(move |event, _, control_flow| {
@@ -61,6 +49,11 @@ fn main() {
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 _ => (),
             },
+            Event::OpenFiles(files) => {
+                for path in files {
+                    open_file(&window, path.as_ref());
+                }
+            }
             _ => (),
         };
     });
