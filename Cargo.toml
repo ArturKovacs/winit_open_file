@@ -16,4 +16,4 @@ copyright = "Copyright (c) 2020 The Emulsion Contributors"
 
 [dependencies]
 #winit = { path = "/Users/arturkovacs/software/winit" }
-winit = { git = "https://github.com/ArturKovacs/winit.git", rev = "328471bb7c8ba0d6f4cc932301ae9b58b5ed7761" }
+winit = { git = "https://github.com/ArturKovacs/winit.git", rev = "5375137fd510aa8c8a12607f1480f04fcab46a1f" }

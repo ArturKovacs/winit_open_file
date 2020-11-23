@@ -12,7 +12,7 @@ fn open_file(window: &Window, path: &Path) {
     // TODO place your file opening logic here.
     let filename = path.as_os_str();
     let filename = filename.to_owned().into_string().unwrap();
-    let title = format!("Received file: '{}'", filename);
+    let title = format!("Opened file: '{}'", filename);
     window.set_title(&title);
 }
 
