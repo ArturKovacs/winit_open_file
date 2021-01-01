@@ -255,6 +255,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9ea835d29036a4087793836fa931b08837ad5e957da9e23886b29586fb9b6650"
 
 [[package]]
+name = "error-chain"
+version = "0.12.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2d2f06b9cac1506ece98fe3231e3cc9c4410ec3d5b1f24ae1c8946f0742cdefc"
+dependencies = [
+ "version_check",
+]
+
+[[package]]
 name = "fnv"
 version = "1.0.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -742,6 +751,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "syslog"
+version = "5.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a5d8ef1b679c07976f3ee336a436453760c470f54b5e7237556728b8589515d"
+dependencies = [
+ "error-chain",
+ "libc",
+ "log",
+ "time",
+]
+
+[[package]]
 name = "thiserror"
 version = "1.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -759,6 +780,17 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "time"
+version = "0.1.44"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6db9e6914ab8b1ae1c260a4ae7a49b6c5611b40328a735b21862567685e73255"
+dependencies = [
+ "libc",
+ "wasi",
+ "winapi 0.3.9",
 ]
 
 [[package]]
@@ -798,6 +830,12 @@ dependencies = [
  "winapi 0.3.9",
  "winapi-util",
 ]
+
+[[package]]
+name = "wasi"
+version = "0.10.0+wasi-snapshot-preview1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 
 [[package]]
 name = "wayland-client"
@@ -918,7 +956,6 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "winit"
 version = "0.23.0"
-source = "git+https://github.com/ArturKovacs/winit.git?rev=5375137fd510aa8c8a12607f1480f04fcab46a1f#5375137fd510aa8c8a12607f1480f04fcab46a1f"
 dependencies = [
  "bitflags",
  "cocoa",
@@ -949,6 +986,8 @@ dependencies = [
 name = "winit_open"
 version = "0.1.0"
 dependencies = [
+ "log",
+ "syslog",
  "winit",
 ]
 
