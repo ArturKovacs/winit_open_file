@@ -4,22 +4,44 @@ use std::sync::Arc;
 use log::{info, trace, LevelFilter, SetLoggerError};
 use syslog::{BasicLogger, Facility, Formatter3164};
 
-use winit::{
-    dpi::LogicalSize,
-    event::{Event, KeyboardInput, VirtualKeyCode, WindowEvent},
-    event_loop::{ControlFlow, EventLoop},
-    window::{Window, WindowBuilder},
-};
+use winit::{dpi::LogicalSize, event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent}, event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget}, window::{Window, WindowBuilder}};
 
 #[cfg(target_os = "macos")]
 use winit::platform::macos::{EventLoopWindowTargetExtMacOS, FileOpenResult};
 
 fn open_file(window: &Window, path: &Path) {
     // TODO place your file opening logic here.
+
+    // WARNING:
+    // This example only has a single window where only
+    // the "last" file's path is shown even if multiple files
+    // were selected at once.
+    //
+    // This is not an idiomatic way to handle file open
+    // requests on macOS. Instead, applications usually open a new
+    // window for each file or open all files in a single window.
+
     let filename = path.as_os_str();
     let filename = filename.to_owned().into_string().unwrap();
     let title = format!("> Opened: '{}'", filename);
     window.set_title(&title);
+}
+
+fn set_file_open_callback(window: &Arc<Window>, el_win_target: &EventLoopWindowTarget<()>, enable: bool) {
+    #[cfg(target_os = "macos")]
+    {
+        if enable {
+            let window = window.clone();
+            el_win_target.set_file_open_callback(Some(Box::new(move |paths: Vec<PathBuf>| {
+                for path in paths.iter() {
+                    open_file(&*window, path.as_ref());
+                }
+                FileOpenResult::Success
+            }) as _));
+        } else {
+            el_win_target.set_file_open_callback(None);
+        }
+    }
 }
 
 fn main() {
@@ -61,32 +83,35 @@ fn main() {
         open_file(&window, file_path.as_ref());
     }
 
-    #[cfg(target_os = "macos")]
-    {
-        let window = window.clone();
-        event_loop.set_file_open_callback(Some(move |paths: Vec<PathBuf>| {
-            for path in paths.iter() {
-                open_file(&*window, path.as_ref());
-            }
-            FileOpenResult::Success
-        }));
-    }
+    // WARNING
+    // Normally this boolean is not needed, it is only used to demonstrate
+    // that the callback can be set to `None` while the application is running
+    // and that restores the default behavior.
+    let mut has_callback = true;
+    set_file_open_callback(&window, &*event_loop, has_callback);
 
-    event_loop.run(move |event, _, control_flow| {
+    event_loop.run(move |event, el_win_target, control_flow| {
         *control_flow = ControlFlow::Wait;
-        //trace!("Event: {:?}", event);
         match event {
             Event::WindowEvent { event, .. } => match event {
                 WindowEvent::CloseRequested => *control_flow = ControlFlow::Exit,
                 WindowEvent::KeyboardInput {
                     input:
                         KeyboardInput {
-                            virtual_keycode: Some(VirtualKeyCode::Escape),
+                            virtual_keycode: Some(vkey),
+                            state: ElementState::Released,
                             ..
                         },
                     ..
                 } => {
-                    *control_flow = ControlFlow::Exit;
+                    match vkey {
+                        VirtualKeyCode::Escape => *control_flow = ControlFlow::Exit,
+                        VirtualKeyCode::Space => {
+                            has_callback = !has_callback;
+                            set_file_open_callback(&window, el_win_target, has_callback);
+                        }
+                        _ => ()
+                    }
                 }
                 _ => (),
             },
