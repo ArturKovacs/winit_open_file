@@ -1,13 +1,21 @@
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
+use std::{
+    path::{Path, PathBuf},
+    sync::Mutex,
+};
 
 use log::{info, trace, LevelFilter, SetLoggerError};
 use syslog::{BasicLogger, Facility, Formatter3164};
 
-use winit::{dpi::LogicalSize, event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent}, event_loop::{ControlFlow, EventLoop, EventLoopWindowTarget}, window::{Window, WindowBuilder}};
+use winit::{
+    dpi::LogicalSize,
+    event::{ElementState, Event, KeyboardInput, VirtualKeyCode, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+    window::{Window, WindowBuilder},
+};
 
 #[cfg(target_os = "macos")]
-use winit::platform::macos::{EventLoopWindowTargetExtMacOS, FileOpenResult};
+use winit::platform::macos::{EventLoopExtMacOS, FileOpenResult};
 
 fn open_file(window: &Window, path: &Path) {
     // TODO place your file opening logic here.
@@ -23,26 +31,26 @@ fn open_file(window: &Window, path: &Path) {
 
     let filename = path.as_os_str();
     let filename = filename.to_owned().into_string().unwrap();
-    let title = format!("> Opened: '{}'", filename);
+    let title = format!("Opened: '{}'", filename);
     window.set_title(&title);
 }
 
-fn set_file_open_callback(window: &Arc<Window>, el_win_target: &EventLoopWindowTarget<()>, enable: bool) {
-    #[cfg(target_os = "macos")]
-    {
-        if enable {
-            let window = window.clone();
-            el_win_target.set_file_open_callback(Some(Box::new(move |paths: Vec<PathBuf>| {
-                for path in paths.iter() {
-                    open_file(&*window, path.as_ref());
-                }
-                FileOpenResult::Success
-            }) as _));
-        } else {
-            el_win_target.set_file_open_callback(None);
-        }
-    }
-}
+// fn set_file_open_callback(window: &Arc<Window>, el_win_target: &EventLoopWindowTarget<()>, enable: bool) {
+//     #[cfg(target_os = "macos")]
+//     {
+//         if enable {
+//             let window = window.clone();
+//             el_win_target.set_file_open_callback(Some(Box::new(move |paths: Vec<PathBuf>| {
+//                 for path in paths.iter() {
+//                     open_file(&*window, path.as_ref());
+//                 }
+//                 FileOpenResult::Success
+//             }) as _));
+//         } else {
+//             el_win_target.set_file_open_callback(None);
+//         }
+//     }
+// }
 
 fn main() {
     let formatter = Formatter3164 {
@@ -59,7 +67,28 @@ fn main() {
 
     info!("hello world");
 
-    let event_loop = EventLoop::new();
+    let window_ref: Arc<Mutex<Option<Window>>> = Default::default();
+
+    let event_loop;
+    #[cfg(target_os = "macos")]
+    {
+        let window_ref = window_ref.clone();
+        event_loop = EventLoop::<()>::new_with_file_open_callback(move |paths: Vec<PathBuf>| {
+            let guard = window_ref.lock().unwrap();
+            let window = match &*guard {
+                Some(window) => window,
+                None => return FileOpenResult::Failure,
+            };
+            for path in paths.iter() {
+                open_file(window, path.as_ref());
+            }
+            FileOpenResult::Success
+        });
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        event_loop = EventLoop::new();
+    }
 
     // Systems other than macOS provide the file paths
     // as a program argument.
@@ -70,27 +99,21 @@ fn main() {
         file_path = None;
     }
 
-    let window = Arc::new(
-        WindowBuilder::new()
-            .with_title("Loading")
-            .with_inner_size(LogicalSize::new(400.0, 200.0))
-            .with_resizable(true)
-            .build(&event_loop)
-            .unwrap(),
-    );
-
+    let window = WindowBuilder::new()
+        .with_title("Loading")
+        .with_inner_size(LogicalSize::new(400.0, 200.0))
+        .with_resizable(true)
+        .build(&event_loop)
+        .unwrap();
     if let Some(file_path) = file_path {
         open_file(&window, file_path.as_ref());
     }
+    {
+        let mut guard = window_ref.lock().unwrap();
+        *guard = Some(window);
+    }
 
-    // WARNING
-    // Normally this boolean is not needed, it is only used to demonstrate
-    // that the callback can be set to `None` while the application is running
-    // and that restores the default behavior.
-    let mut has_callback = true;
-    set_file_open_callback(&window, &*event_loop, has_callback);
-
-    event_loop.run(move |event, el_win_target, control_flow| {
+    event_loop.run(move |event, _, control_flow| {
         *control_flow = ControlFlow::Wait;
         match event {
             Event::WindowEvent { event, .. } => match event {
@@ -98,20 +121,13 @@ fn main() {
                 WindowEvent::KeyboardInput {
                     input:
                         KeyboardInput {
-                            virtual_keycode: Some(vkey),
+                            virtual_keycode: Some(VirtualKeyCode::Escape),
                             state: ElementState::Released,
                             ..
                         },
                     ..
                 } => {
-                    match vkey {
-                        VirtualKeyCode::Escape => *control_flow = ControlFlow::Exit,
-                        VirtualKeyCode::Space => {
-                            has_callback = !has_callback;
-                            set_file_open_callback(&window, el_win_target, has_callback);
-                        }
-                        _ => ()
-                    }
+                    *control_flow = ControlFlow::Exit;
                 }
                 _ => (),
             },
