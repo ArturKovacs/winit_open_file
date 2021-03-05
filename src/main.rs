@@ -1,10 +1,9 @@
-use std::sync::Arc;
+
 use std::{
     path::{Path, PathBuf},
-    sync::Mutex,
 };
 
-use log::{info, trace, LevelFilter, SetLoggerError};
+use log::{info, LevelFilter};
 use syslog::{BasicLogger, Facility, Formatter3164};
 
 use winit::{
@@ -35,23 +34,6 @@ fn open_file(window: &Window, path: &Path) {
     window.set_title(&title);
 }
 
-// fn set_file_open_callback(window: &Arc<Window>, el_win_target: &EventLoopWindowTarget<()>, enable: bool) {
-//     #[cfg(target_os = "macos")]
-//     {
-//         if enable {
-//             let window = window.clone();
-//             el_win_target.set_file_open_callback(Some(Box::new(move |paths: Vec<PathBuf>| {
-//                 for path in paths.iter() {
-//                     open_file(&*window, path.as_ref());
-//                 }
-//                 FileOpenResult::Success
-//             }) as _));
-//         } else {
-//             el_win_target.set_file_open_callback(None);
-//         }
-//     }
-// }
-
 fn main() {
     let formatter = Formatter3164 {
         facility: Facility::LOG_USER,
@@ -67,29 +49,8 @@ fn main() {
 
     info!("hello world");
 
-    let window_ref: Arc<Mutex<Option<Window>>> = Default::default();
-
-    let event_loop;
-    #[cfg(target_os = "macos")]
-    {
-        let window_ref = window_ref.clone();
-        event_loop = EventLoop::<()>::new_with_file_open_callback(move |paths: Vec<PathBuf>| {
-            let guard = window_ref.lock().unwrap();
-            let window = match &*guard {
-                Some(window) => window,
-                None => return FileOpenResult::Failure,
-            };
-            for path in paths.iter() {
-                open_file(window, path.as_ref());
-            }
-            FileOpenResult::Success
-        });
-    }
-    #[cfg(not(target_os = "macos"))]
-    {
-        event_loop = EventLoop::new();
-    }
-
+    let event_loop = EventLoop::new();
+    
     // Systems other than macOS provide the file paths
     // as a program argument.
     let file_path;
@@ -108,9 +69,14 @@ fn main() {
     if let Some(file_path) = file_path {
         open_file(&window, file_path.as_ref());
     }
+    #[cfg(target_os = "macos")]
     {
-        let mut guard = window_ref.lock().unwrap();
-        *guard = Some(window);
+        event_loop.set_file_open_callback(Some(Box::new(move |paths: Vec<PathBuf>| {
+            for path in paths.iter() {
+                open_file(&window, path.as_ref());
+            }
+            FileOpenResult::Success
+        })));
     }
 
     event_loop.run(move |event, _, control_flow| {

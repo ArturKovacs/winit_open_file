@@ -956,6 +956,7 @@ checksum = "712e227841d057c1ee1cd2fb22fa7e5a5461ae8e48fa2ca79ec42cfc1931183f"
 [[package]]
 name = "winit"
 version = "0.24.0"
+source = "git+https://github.com/ArturKovacs/winit.git?rev=8d5b1942129d36b4ec1a6a64ea1719cf984436a8#8d5b1942129d36b4ec1a6a64ea1719cf984436a8"
 dependencies = [
  "bitflags",
  "cocoa",
