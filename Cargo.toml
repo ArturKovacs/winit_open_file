@@ -17,5 +17,5 @@ copyright = "Copyright (c) 2020 The Emulsion Contributors"
 [dependencies]
 log = "*"
 syslog = "5.0"
-#winit = { path = "/Users/arturkovacs/software/winit" }
-winit = { git = "https://github.com/ArturKovacs/winit.git", rev = "8d5b1942129d36b4ec1a6a64ea1719cf984436a8" }
+# winit = { path = "/Users/arturkovacs/software/winit-2" }
+winit = { git = "https://github.com/ArturKovacs/winit.git", rev = "2fb602a84cc485b18635cb82982a100abc47083d" }

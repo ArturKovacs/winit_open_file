@@ -1,7 +1,4 @@
-
-use std::{
-    path::{Path, PathBuf},
-};
+use std::path::{Path, PathBuf};
 
 use log::{info, LevelFilter};
 use syslog::{BasicLogger, Facility, Formatter3164};
@@ -50,7 +47,7 @@ fn main() {
     info!("hello world");
 
     let event_loop = EventLoop::new();
-    
+
     // Systems other than macOS provide the file paths
     // as a program argument.
     let file_path;
